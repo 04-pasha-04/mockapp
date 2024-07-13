@@ -1,0 +1,31 @@
+.container {
+  position: relative; /* Ensure that the floating button is positioned correctly */
+}
+
+.floating-btn {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 60px;
+  background-color: #007bff; /* Blue color */
+  color: #fff;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 1000; /* Ensure the button is above other content */
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.floating-btn:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+  transform: translateX(-50%) scale(1.1); /* Slightly enlarge on hover */
+}
+
+.floating-btn:active {
+  background-color: #00408d; /* Even darker blue on click */
+}
