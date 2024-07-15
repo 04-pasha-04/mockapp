@@ -1,4 +1,4 @@
-to run:
-\cd mockapp
-\npm install
-\npm run dev
+to run:<br />
+cd mockapp<br />
+npm installnpm<br />
+run dev
