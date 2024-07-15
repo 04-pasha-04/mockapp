@@ -1,6 +1,6 @@
 to run:<br />
-npm i<br /> u
-npm run dev<br /> u
+npm i<br />
+npm run dev<br />
 
 # React + TypeScript + Vite
 
