@@ -1,11 +1,10 @@
-// src/components/ItemForm/ItemForm.tsx
 import React, { useState, useEffect } from 'react';
 import { Task } from '../../interfaces';
 
 interface ItemFormProps {
     show: boolean;
     handleClose: () => void;
-    userId: string;
+    userId: string; // Added userId prop
     addOrEditTask: (task: Partial<Task>) => void;
     editTask: Task | null;
 }
@@ -14,14 +13,14 @@ const ItemForm: React.FC<ItemFormProps> = ({ show, handleClose, addOrEditTask, e
     const [taskTitle, setTaskTitle] = useState<string>('');
     const [taskDescription, setTaskDescription] = useState<string>('');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
-    const [dueDate, setDueDate] = useState<string>('');  // Added state for due date
+    const [dueDate, setDueDate] = useState<string>('');
 
     useEffect(() => {
         if (editTask) {
-            setTaskTitle(editTask.title);
-            setTaskDescription(editTask.description);
-            setSelectedTags(editTask.priority ? editTask.priority.split(', ') : []);  // Handle undefined priority
-            setDueDate(editTask.dueDate ? new Date(editTask.dueDate).toISOString().split('T')[0] : '');  // Handle undefined dueDate
+            setTaskTitle(editTask.title || '');
+            setTaskDescription(editTask.description || '');
+            setSelectedTags(editTask.priority ? editTask.priority.split(', ') : []);
+            setDueDate(editTask.dueDate ? new Date(editTask.dueDate).toISOString().split('T')[0] : '');
         } else {
             setTaskTitle('');
             setTaskDescription('');
@@ -44,8 +43,8 @@ const ItemForm: React.FC<ItemFormProps> = ({ show, handleClose, addOrEditTask, e
             title: taskTitle,
             description: taskDescription,
             priority: selectedTags.join(', '),
-            dueDate,  // Include the due date
-            completed: false
+            dueDate,
+            completed: false,
         };
 
         addOrEditTask(newTask);

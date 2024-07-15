@@ -10,20 +10,21 @@ import TaskList from './components/TaskList/TaskList';
 import ThemeSwitcher from './components/ThemeSwitcher/ThemeSwitcher';
 import axios from 'axios';
 import { User, Task } from './interfaces';
+import { setCookie, getCookie } from './utils/cookies';
 
-const apiUrl = 'https://66913c4126c2a69f6e8f0897.mockapi.io/api'; // Replace with your MockAPI URL
+const apiUrl = 'https://66913c4126c2a69f6e8f0897.mockapi.io/api';
 
 const App: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [tasks, setTasks] = useState<Task[]>([]);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [show, setShow] = useState<boolean>(false);
-    const [editTask, setEditTask] = useState<Task | null>(null); // Added this state for the task to be edited
+    const [editTask, setEditTask] = useState<Task | null>(null);
     const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
     const handleClose = () => {
         setShow(false);
-        setEditTask(null); // Clear the edit task state when closing the modal
+        setEditTask(null);
     };
 
     const handleShow = () => setShow(true);
@@ -43,7 +44,13 @@ const App: React.FC = () => {
             setTasks(response.data);
             setSelectedUser(user);
         } catch (error) {
-            console.error('Error fetching tasks:', error);
+            if (axios.isAxiosError(error) && error.response?.status === 404) {
+                console.log('No tasks found for this user.');
+                setTasks([]);
+                setSelectedUser(user);
+            } else {
+                console.error('Error fetching tasks:', error);
+            }
         }
     };
 
@@ -120,19 +127,27 @@ const App: React.FC = () => {
     };
 
     const editTaskHandler = (task: Task) => {
-        setEditTask(task);  // Set the task to be edited
-        handleShow();  // Show the form
+        setEditTask(task);
+        handleShow();
     };
 
     useEffect(() => {
         fetchUsers();
     }, []);
 
+    useEffect(() => {
+        const storedTheme = getCookie('theme') as 'light' | 'dark';
+        if (storedTheme) {
+            setTheme(storedTheme);
+        }
+    }, []);
+
     const toggleTheme = () => {
-        setTheme(theme === 'light' ? 'dark' : 'light');
+        const newTheme = theme === 'light' ? 'dark' : 'light';
+        setTheme(newTheme);
+        setCookie('theme', newTheme, 365);  // Set cookie to expire in 1 year
     };
 
-    // Apply the theme to the body
     useEffect(() => {
         document.body.setAttribute('data-bs-theme', theme);
     }, [theme]);
@@ -161,7 +176,7 @@ const App: React.FC = () => {
                             handleShow={handleShow}
                             onDeleteTask={deleteTask}
                             onCompleteTask={completeTask}
-                            onEditTask={editTaskHandler}  // Pass the editTask function
+                            onEditTask={editTaskHandler}
                         />
                     } />
                 </Routes>
@@ -172,11 +187,9 @@ const App: React.FC = () => {
                         handleClose={handleClose}
                         userId={selectedUser.id}
                         addOrEditTask={addOrEditTask}
-                        editTask={editTask}  // Pass the selected task for editing
+                        editTask={editTask}
                     />
                 )}
-
-                
             </div>
         </Router>
     );

@@ -14,7 +14,6 @@ interface TaskListProps {
 const TaskList: React.FC<TaskListProps> = ({ tasks, user, handleShow, onDeleteTask, onCompleteTask, onEditTask }) => {
     const navigate = useNavigate();
 
-    // Calculate the percentage of completed tasks
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter(task => task.completed).length;
     const completionPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
