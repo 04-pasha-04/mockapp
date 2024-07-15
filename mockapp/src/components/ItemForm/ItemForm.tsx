@@ -1,17 +1,35 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+// src/components/ItemForm/ItemForm.tsx
+import React, { useState, useEffect } from 'react';
+import { Task } from '../../interfaces';
 
 interface ItemFormProps {
     show: boolean;
     handleClose: () => void;
+    userId: string;
+    addOrEditTask: (task: Partial<Task>) => void;
+    editTask: Task | null;
 }
 
-const ItemForm: React.FC<ItemFormProps> = ({ show, handleClose }) => {
-    const [taskName, setTaskName] = useState<string>('');
+const ItemForm: React.FC<ItemFormProps> = ({ show, handleClose, addOrEditTask, editTask }) => {
+    const [taskTitle, setTaskTitle] = useState<string>('');
     const [taskDescription, setTaskDescription] = useState<string>('');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [dueDate, setDueDate] = useState<string>('');  // Added state for due date
 
-    // Example tags; you can fetch these from an API or a predefined list
+    useEffect(() => {
+        if (editTask) {
+            setTaskTitle(editTask.title);
+            setTaskDescription(editTask.description);
+            setSelectedTags(editTask.priority ? editTask.priority.split(', ') : []);  // Handle undefined priority
+            setDueDate(editTask.dueDate ? new Date(editTask.dueDate).toISOString().split('T')[0] : '');  // Handle undefined dueDate
+        } else {
+            setTaskTitle('');
+            setTaskDescription('');
+            setSelectedTags([]);
+            setDueDate('');
+        }
+    }, [editTask]);
+
     const availableTags = ['Work', 'Personal', 'Urgent', 'Important', 'Low Priority', 'High Priority'];
 
     const handleTagChange = (tag: string) => {
@@ -20,80 +38,85 @@ const ItemForm: React.FC<ItemFormProps> = ({ show, handleClose }) => {
         );
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const newTask = {
-            name: taskName,
+        const newTask: Partial<Task> = {
+            title: taskTitle,
             description: taskDescription,
-            tags: selectedTags,  // Include tags in the request payload
+            priority: selectedTags.join(', '),
+            dueDate,  // Include the due date
+            completed: false
         };
 
-        try {
-            const response = await axios.post('https://YOUR_MOCKAPI_URL/tasks', newTask);
-            console.log('Task added:', response.data);
-            setTaskName('');
-            setTaskDescription('');
-            setSelectedTags([]);
-            handleClose(); // Close the modal after submitting the form
-        } catch (error) {
-            console.error('Error adding task:', error);
-        }
+        addOrEditTask(newTask);
     };
 
     return (
         <div>
             {show && (
-                <div className="modal fade show d-block" tabIndex={-1} role="dialog">
-                    <div className="modal-dialog" role="document">
+                <div className="modal d-block" tabIndex={-1}>
+                    <div className="modal-dialog">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">Create New Task</h5>
+                                <h5 className="modal-title">{editTask ? 'Edit Task' : 'Add Task'}</h5>
+                                <button type="button" className="btn-close" onClick={handleClose}></button>
                             </div>
                             <div className="modal-body">
                                 <form onSubmit={handleSubmit}>
-                                    <div className="form-group">
-                                        <label htmlFor="taskNameInput">Task Name</label>
+                                    <div className="form-group mb-3">
+                                        <label htmlFor="taskTitleInput">Task Title</label>
                                         <input
                                             type="text"
                                             className="form-control"
-                                            id="taskNameInput"
-                                            placeholder="Enter task name"
-                                            value={taskName}
-                                            onChange={(e) => setTaskName(e.target.value)}
+                                            id="taskTitleInput"
+                                            placeholder="Enter task title"
+                                            value={taskTitle}
+                                            onChange={(e) => setTaskTitle(e.target.value)}
+                                            required
                                         />
                                     </div>
-                                    <div className="form-group">
-                                        <label htmlFor="taskDescriptionTextArea">Task Description</label>
+                                    <div className="form-group mb-3">
+                                        <label htmlFor="taskDescriptionInput">Task Description</label>
                                         <textarea
                                             className="form-control"
-                                            id="taskDescriptionTextArea"
-                                            rows={3}
+                                            id="taskDescriptionInput"
                                             placeholder="Enter task description"
                                             value={taskDescription}
                                             onChange={(e) => setTaskDescription(e.target.value)}
-                                        ></textarea>
+                                            required
+                                        />
                                     </div>
-                                    <div className="form-group">
-                                        <label htmlFor="tagsSelect">Tags</label>
-                                        <div id="tagsSelect">
-                                            {availableTags.map((tag) => (
-                                                <div className="form-check" key={tag}>
+                                    <div className="form-group mb-3">
+                                        <label>Tags</label>
+                                        <div className="d-flex flex-wrap">
+                                            {availableTags.map(tag => (
+                                                <div key={tag} className="form-check me-3">
                                                     <input
-                                                        type="checkbox"
                                                         className="form-check-input"
-                                                        id={`tag${tag}`}
-                                                        checked={selectedTags.includes(tag)}
+                                                        type="checkbox"
+                                                        value={tag}
+                                                        id={`tag-${tag}`}
                                                         onChange={() => handleTagChange(tag)}
+                                                        checked={selectedTags.includes(tag)}
                                                     />
-                                                    <label className="form-check-label" htmlFor={`tag${tag}`}>
+                                                    <label className="form-check-label" htmlFor={`tag-${tag}`}>
                                                         {tag}
                                                     </label>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
-                                    <button type="submit" className="btn btn-primary">Add</button>
-                                    <button type="button" className="btn btn-danger ml-auto" onClick={handleClose}>Exit</button>
+                                    <div className="form-group mb-3">
+                                        <label htmlFor="dueDateInput">Due Date</label>
+                                        <input
+                                            type="date"
+                                            className="form-control"
+                                            id="dueDateInput"
+                                            value={dueDate}
+                                            onChange={(e) => setDueDate(e.target.value)}
+                                        />
+                                    </div>
+                                    <button type="submit" className="btn btn-primary">{editTask ? 'Update Task' : 'Save Task'}</button>
                                 </form>
                             </div>
                         </div>

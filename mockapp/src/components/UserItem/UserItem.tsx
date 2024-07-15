@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './UserItem.css'
 
 interface User {
     id: string;
@@ -21,11 +22,17 @@ const UserItem: React.FC<UserItemProps> = ({ user, onEdit, onDelete, onSelect })
         setIsEditing(false);
     };
 
+    const handleSelect = () => {
+        if (!isEditing) {
+            onSelect();
+        }
+    };
+
     return (
         <li
-            className="list-group-item d-flex justify-content-between align-items-center"
-            onClick={onSelect}
-            style={{ cursor: 'pointer' }}
+            className={`list-group-item d-flex justify-content-between align-items-center ${isEditing ? '' : 'hover-effect'}`}
+            onClick={handleSelect}
+            style={{ cursor: isEditing ? 'default' : 'pointer' }}
         >
             {isEditing ? (
                 <>
@@ -35,15 +42,35 @@ const UserItem: React.FC<UserItemProps> = ({ user, onEdit, onDelete, onSelect })
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
                     />
-                    <button className="btn btn-primary me-2" onClick={(e) => { e.stopPropagation(); handleEdit(); }}>Save</button>
-                    <button className="btn btn-secondary" onClick={(e) => { e.stopPropagation(); setIsEditing(false); }}>Cancel</button>
+                    <button
+                        className="btn btn-primary me-2"
+                        onClick={(e) => { e.stopPropagation(); handleEdit(); }}
+                    >
+                        Save
+                    </button>
+                    <button
+                        className="btn btn-secondary"
+                        onClick={(e) => { e.stopPropagation(); setIsEditing(false); }}
+                    >
+                        Cancel
+                    </button>
                 </>
             ) : (
                 <>
                     <span>{user.name}</span>
                     <div>
-                        <button className="btn btn-primary me-2" onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}>Edit</button>
-                        <button className="btn btn-danger" onClick={(e) => { e.stopPropagation(); onDelete(user.id); }}>Delete</button>
+                        <button
+                            className="btn btn-outline-primary me-2"
+                            onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+                        >
+                            Edit
+                        </button>
+                        <button
+                            className="btn btn-outline-danger"
+                            onClick={(e) => { e.stopPropagation(); onDelete(user.id); }}
+                        >
+                            Delete
+                        </button>
                     </div>
                 </>
             )}

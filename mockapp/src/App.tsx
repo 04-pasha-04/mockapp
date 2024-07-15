@@ -1,23 +1,15 @@
+// src/App.tsx
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes} from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import ItemForm from './components/ItemForm/ItemForm';
 import UserList from './components/UserList/UserList';
 import TaskList from './components/TaskList/TaskList';
+import ThemeSwitcher from './components/ThemeSwitcher/ThemeSwitcher';
 import axios from 'axios';
-
-interface User {
-    id: string;
-    name: string;
-}
-
-interface Task {
-    id: string;
-    name: string;
-    description: string;
-    priority: string;
-}
+import { User, Task } from './interfaces';
 
 const apiUrl = 'https://66913c4126c2a69f6e8f0897.mockapi.io/api'; // Replace with your MockAPI URL
 
@@ -26,8 +18,14 @@ const App: React.FC = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [show, setShow] = useState<boolean>(false);
+    const [editTask, setEditTask] = useState<Task | null>(null); // Added this state for the task to be edited
+    const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
-    const handleClose = () => setShow(false);
+    const handleClose = () => {
+        setShow(false);
+        setEditTask(null); // Clear the edit task state when closing the modal
+    };
+
     const handleShow = () => setShow(true);
 
     const fetchUsers = async () => {
@@ -41,7 +39,7 @@ const App: React.FC = () => {
 
     const fetchTasks = async (user: User) => {
         try {
-            const response = await axios.get<Task[]>(`${apiUrl}/users/${user.id}/items`);
+            const response = await axios.get<Task[]>(`${apiUrl}/users/${user.id}/todos`);
             setTasks(response.data);
             setSelectedUser(user);
         } catch (error) {
@@ -80,14 +78,72 @@ const App: React.FC = () => {
         }
     };
 
+    const addOrEditTask = async (task: Partial<Task>) => {
+        if (editTask) {
+            // Edit task
+            try {
+                const response = await axios.put<Task>(`${apiUrl}/users/${selectedUser?.id}/todos/${editTask.id}`, { ...task, priority: task.priority || '' });
+                setTasks(tasks.map(t => t.id === editTask.id ? response.data : t));
+                handleClose();
+            } catch (error) {
+                console.error('Error editing task:', error);
+            }
+        } else {
+            // Add task
+            try {
+                const response = await axios.post<Task>(`${apiUrl}/users/${selectedUser?.id}/todos`, { ...task, priority: task.priority || '' });
+                setTasks([...tasks, response.data]);
+                handleClose();
+            } catch (error) {
+                console.error('Error adding task:', error);
+            }
+        }
+    };
+
+    const deleteTask = async (taskId: string) => {
+        try {
+            await axios.delete(`${apiUrl}/users/${selectedUser?.id}/todos/${taskId}`);
+            setTasks(tasks.filter(task => task.id !== taskId));
+        } catch (error) {
+            console.error('Error deleting task:', error);
+        }
+    };
+
+    const completeTask = async (task: Task) => {
+        try {
+            const updatedTask = { ...task, completed: !task.completed };
+            const response = await axios.put<Task>(`${apiUrl}/users/${selectedUser?.id}/todos/${task.id}`, updatedTask);
+            setTasks(tasks.map(t => t.id === task.id ? response.data : t));
+        } catch (error) {
+            console.error('Error completing task:', error);
+        }
+    };
+
+    const editTaskHandler = (task: Task) => {
+        setEditTask(task);  // Set the task to be edited
+        handleShow();  // Show the form
+    };
+
     useEffect(() => {
         fetchUsers();
     }, []);
 
+    const toggleTheme = () => {
+        setTheme(theme === 'light' ? 'dark' : 'light');
+    };
+
+    // Apply the theme to the body
+    useEffect(() => {
+        document.body.setAttribute('data-bs-theme', theme);
+    }, [theme]);
+
     return (
         <Router>
             <div className="container mt-5">
-                <h1 className="mb-4">Todo List</h1>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <h1>Todo List</h1>
+                    <ThemeSwitcher theme={theme} toggleTheme={toggleTheme} />
+                </div>
                 <Routes>
                     <Route path="/" element={
                         <UserList
@@ -103,10 +159,24 @@ const App: React.FC = () => {
                             tasks={tasks}
                             user={selectedUser}
                             handleShow={handleShow}
+                            onDeleteTask={deleteTask}
+                            onCompleteTask={completeTask}
+                            onEditTask={editTaskHandler}  // Pass the editTask function
                         />
                     } />
                 </Routes>
-                <ItemForm show={show} handleClose={handleClose} />
+
+                {selectedUser && (
+                    <ItemForm
+                        show={show}
+                        handleClose={handleClose}
+                        userId={selectedUser.id}
+                        addOrEditTask={addOrEditTask}
+                        editTask={editTask}  // Pass the selected task for editing
+                    />
+                )}
+
+                
             </div>
         </Router>
     );

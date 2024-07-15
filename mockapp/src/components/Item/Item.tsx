@@ -17,7 +17,7 @@ const Item: React.FC<ItemProps> = ({ task }) => {
                 <h5 className="card-title">{task.name}</h5>
                 <p className="card-text">{task.description}</p>
                 <p className="card-text">
-                    <small className="text-muted">Priority: {task.priority}</small>
+                    <small className="text-muted">Tags: {task.priority}</small>
                 </p>
             </div>
         </div>
